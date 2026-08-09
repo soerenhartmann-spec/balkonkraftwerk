@@ -97,12 +97,6 @@ function breakEvenDate(data, inv) {
   return `${MONAT_LANG[m]} ${j}`;
 }
 
-function berechneStreak(data,threshold=10){
-  let streak=0,max=0;
-  for(const r of data){ if(r.gespart>=threshold){streak++;max=Math.max(max,streak);}else streak=0; }
-  return {current:streak,max};
-}
-
 // ── CSV EXPORT ─────────────────────────────────────────────────────────────
 function exportCSV(data) {
   const headers = ["Monat","Jahr","Netzverbrauch_kWh","Produziert_kWh","Einsatz_Zuhause_kWh",
@@ -293,16 +287,14 @@ export default function App(){
     const ev         =data.reduce((s,r)=>s+r.einsatzZuhause,0);
     const einsp      =data.reduce((s,r)=>s+r.eingespeist,0);
     const stromk     =data.reduce((s,r)=>s+r.stromkosten,0);
-    const netto      =data.reduce((s,r)=>s+r.nettoKosten,0);
     const co2        =data.reduce((s,r)=>s+r.co2,0);
     const avgAut     =data.reduce((s,r)=>s+r.autarkie,0)/data.length;
     const noch       =INVESTITION_NETTO-gespart;
     const avgPm      =gespart/data.length;
     const bestMonat  =data.reduce((b,r)=>r.gespart>b.gespart?r:b,data[0]);
-    const worstMonat =data.reduce((b,r)=>r.gespart<b.gespart?r:b,data[0]);
     const last3      =data.slice(-3);
     const rolling3   =last3.reduce((s,r)=>s+r.gespart,0)/last3.length;
-    return { gespart,prod,ev,einsp,stromk,netto,co2,avgAut,noch,avgPm,bestMonat,worstMonat,rolling3,jahresprognose:avgPm*12 };
+    return { gespart,prod,ev,einsp,stromk,co2,avgAut,noch,avgPm,bestMonat,rolling3,jahresprognose:avgPm*12 };
   },[data]);
 
   const amortData=useMemo(()=>{ let k=0; return data.map(r=>({name:`${MONAT_NAMEN[r.monat]} ${r.jahr}`,kumulativ:+(k+=r.gespart).toFixed(2)})); },[data]);
@@ -605,7 +597,7 @@ export default function App(){
           <div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:16,marginBottom:24}}>
               <KpiCard label="Gesamt gespart"    value={fmtEur(totals.gespart)}   sub={`Ø ${fmtEur(totals.avgPm)}/Monat`}               color={S.green}  icon="💰"/>
-              <KpiCard label="Netto-Stromkosten" value={fmtEur(totals.netto)}     sub={`Ø ${fmtEur(totals.netto/data.length)}/Monat`}    color={S.red}    icon="🧾" tip="Netto-Stromkosten"/>
+
               <KpiCard label="CO₂ gespart"       value={`${(totals.co2/1000).toFixed(2)} t`} sub={`${fmt(totals.co2)} kg gesamt`}       color={S.green}  icon="🌱"/>
               <KpiCard label="Ø Autarkie"        value={fmtPct(totals.avgAut)}    sub="Solar-Anteil am Gesamtverbrauch"                  color={S.blue}   icon="🏠" tip="Autarkie"/>
             </div>
@@ -713,21 +705,6 @@ export default function App(){
             </div>
 
             <div style={{background:S.card,border:`1px solid ${S.border}`,borderRadius:12,padding:20}}>
-              <div style={{fontWeight:700,marginBottom:4,display:"flex",alignItems:"center",gap:4}}>Netto-Stromkosten<InfoTip term="Netto-Stromkosten"/></div>
-              <div style={{color:S.muted,fontSize:11,marginBottom:16}}>Netzkosten − Solarersparnis. Negativ = Solar übertrifft Netzkosten.</div>
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={chartData} margin={{top:0,right:10,left:-10,bottom:0}}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={S.border}/>
-                  <XAxis dataKey="monat" stroke={S.muted} tick={{fontSize:12}}/>
-                  <YAxis stroke={S.muted} tick={{fontSize:12}} tickFormatter={v=>`${v.toFixed(0)} €`}/>
-                  <Tooltip content={<CTT/>} formatter={v=>[v.toFixed(2)+" €"]}/>
-                  <ReferenceLine y={0} stroke={S.muted} strokeDasharray="4 2"/>
-                  <Bar dataKey="nettoKosten" name="Netto-Kosten (€)" fill={S.red} radius={[4,4,0,0]}/>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-
-            <div style={{background:S.card,border:`1px solid ${S.border}`,borderRadius:12,padding:20}}>
               <div style={{fontWeight:700,marginBottom:4}}>🌱 CO₂-Ersparnis kumuliert</div>
               <div style={{color:S.muted,fontSize:11,marginBottom:16}}>Basis: {CO2_FAKTOR} kg CO₂/kWh (Bundesschnitt 2024)</div>
               <ResponsiveContainer width="100%" height={180}>
@@ -760,7 +737,6 @@ export default function App(){
                   {label:"Hochrechnung/Jahr",value:fmtEur(totals.jahresprognose),sub:"Ø aller Monate × 12",color:S.green},
                   {label:"Break-even",value:breakEvenDate(data,INVESTITION_NETTO),sub:"voraussichtliches Datum",color:S.accent},
                   {label:"3-Monats-Ø",value:fmtEur(totals.rolling3),sub:"letzte 3 Monate",color:S.blue},
-                  {label:"Streak aktuell",value:`${totals.streak.current} Mon.`,sub:`Rekord: ${totals.streak.max} Monate`,color:S.purple},
                 ].map((k,i)=>(
                   <div key={i} style={{background:S.bg,borderRadius:10,padding:16}}>
                     <div style={{color:S.muted,fontSize:11,fontWeight:600,textTransform:"uppercase",marginBottom:6}}>{k.label}</div>
@@ -920,7 +896,7 @@ export default function App(){
                   <td/><td style={{padding:"10px 10px",color:S.blue}}>{totals&&fmt(totals.einsp,0)} kWh</td>
                   <td colSpan={2} style={{padding:"10px 10px"}}>{totals&&fmtPct(totals.avgAut)} Ø</td>
                   <td style={{padding:"10px 10px",color:S.green}}>{totals&&fmtEur(totals.gespart)}</td>
-                  <td style={{padding:"10px 10px",color:S.red}}>{totals&&fmtEur(totals.netto)}</td>
+
                   <td style={{padding:"10px 10px",color:S.green}}>{totals&&fmt(totals.co2,1)} kg</td>
                   <td colSpan={4}/>
                 </tr>
@@ -1062,3 +1038,4 @@ export default function App(){
     </div>
   );
 }
+
