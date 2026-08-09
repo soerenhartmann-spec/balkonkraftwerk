@@ -5,8 +5,8 @@ import {
 } from "recharts";
 
 // ── SUPABASE ────────────────────────────────────────────────────────────────
-const SUPABASE_URL = "https://viwhladpfxcboyerjsrq.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpd2hsYWRwZnhjYm95ZXJqc3JxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyODAyOTAsImV4cCI6MjEwMTg1NjI5MH0.4u8boOijltxkJoMBj6WP7uF72wdDJCuBFV1kI-RkQw4";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY;
 const TABLE = "bkw_monate";
 
 async function sbFetch(path, opts={}) {
@@ -295,6 +295,7 @@ export default function App() {
   // Responsive
   const [isMobile,setIsMobile] = useState(()=>typeof window!=="undefined"&&window.innerWidth<768);
   useEffect(()=>{
+    if(typeof window==="undefined") return;
     const fn=()=>setIsMobile(window.innerWidth<768);
     window.addEventListener("resize",fn); return ()=>window.removeEventListener("resize",fn);
   },[]);
@@ -336,7 +337,7 @@ export default function App() {
   }
 
   // Chart data — windowed
-  const chartData = windowed.map(r=>({...r, monat:MONAT_NAMEN[r.monat]}));
+  const chartData = useMemo(()=>windowed.map(r=>({...r,monat:MONAT_NAMEN[r.monat]})),[windowed]);
 
   // Amort data — always all
   const amortData = useMemo(()=>{ let k=0; return data.map(r=>({name:`${MONAT_NAMEN[r.monat]} ${r.jahr}`,kumulativ:+(k+=r.gespart).toFixed(2)})); },[data]);
