@@ -773,7 +773,7 @@ export default function App(){
           </div>
 
           {/* ── Diagramme ── */}
-          <div style={{borderTop:`1px solid ${S.border}`,margin:"8px 0 24px"}}/>
+          <div style={{borderTop:"1px solid #334155",margin:"8px 0 24px"}}/>
           <div style={{fontWeight:700,fontSize:15,marginBottom:16,color:S.text}}>Diagramme</div>
           <div style={{display:"flex",flexDirection:"column",gap:24}}>
             <div style={{background:S.card,border:`1px solid ${S.border}`,borderRadius:12,padding:20}}>
