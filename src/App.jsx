@@ -770,9 +770,6 @@ export default function App(){
                 ))}
               </div>
             </div>
-          </div>
-
-          {/* ── Diagramme ── */}
           <div style={{borderTop:"1px solid #334155",margin:"8px 0 24px"}}/>
           <div style={{fontWeight:700,fontSize:15,marginBottom:16,color:S.text}}>Diagramme</div>
           <div style={{display:"flex",flexDirection:"column",gap:24}}>
@@ -810,6 +807,7 @@ export default function App(){
                 </LineChart>
               </ResponsiveContainer>
             </div>
+          </div>
           </div>
         )}
 
