@@ -43,17 +43,18 @@ async function deleteRow(id) {
 
 // ── SEED DATA ──────────────────────────────────────────────────────────────
 const SEED = [
-  { jahr:2025, monat:9,  zaehler_start:5461, zaehler_ende:5582, einsp_start:159, einsp_ende:180, produziert: 55.58, ins_haus: 34.58, zum_speicher:0, strompreis:0.3048, kommentar:"" },
-  { jahr:2025, monat:10, zaehler_start:5582, zaehler_ende:5699, einsp_start:180, einsp_ende:193, produziert: 53.87, ins_haus: 33.87, zum_speicher:0, strompreis:0.3048, kommentar:"" },
-  { jahr:2025, monat:11, zaehler_start:5699, zaehler_ende:5878, einsp_start:193, einsp_ende:198, produziert: 38.36, ins_haus: 33.36, zum_speicher:0, strompreis:0.3048, kommentar:"" },
-  { jahr:2025, monat:12, zaehler_start:5878, zaehler_ende:6027, einsp_start:198, einsp_ende:204, produziert: 33.29, ins_haus: 27.29, zum_speicher:0, strompreis:0.3048, kommentar:"Abwesenheit 21.12.–02.01." },
-  { jahr:2026, monat:1,  zaehler_start:6027, zaehler_ende:6225, einsp_start:204, einsp_ende:209, produziert: 36.61, ins_haus: 31.61, zum_speicher:0, strompreis:0.2871, kommentar:"Preissenkung auf 0,2871 €" },
-  { jahr:2026, monat:2,  zaehler_start:6225, zaehler_ende:6392, einsp_start:209, einsp_ende:210, produziert: 36.49, ins_haus: 35.49, zum_speicher:0, strompreis:0.2871, kommentar:"Halber Monat: Akkuerw. + Smartmeter" },
-  { jahr:2026, monat:3,  zaehler_start:6392, zaehler_ende:6488, einsp_start:210, einsp_ende:215, produziert:120.38, ins_haus:115.38, zum_speicher:0, strompreis:0.2871, kommentar:"" },
-  { jahr:2026, monat:4,  zaehler_start:6488, zaehler_ende:6559, einsp_start:215, einsp_ende:240, produziert:150.35, ins_haus:125.35, zum_speicher:0, strompreis:0.2871, kommentar:"2 Tage Anker wg. WLAN nicht gemessen" },
-  { jahr:2026, monat:5,  zaehler_start:6559, zaehler_ende:6648, einsp_start:240, einsp_ende:249, produziert:142.67, ins_haus:133.67, zum_speicher:0, strompreis:0.2871, kommentar:"" },
-  { jahr:2026, monat:6,  zaehler_start:6648, zaehler_ende:6707, einsp_start:249, einsp_ende:270, produziert:150.12, ins_haus:129.12, zum_speicher:0, strompreis:0.2871, kommentar:"" },
-  { jahr:2026, monat:7,  zaehler_start:6707, zaehler_ende:6729, einsp_start:270, einsp_ende:316, produziert:152.66, ins_haus:106.66, zum_speicher:0, strompreis:0.2871, kommentar:"3 Wochen Sommerurlaub" },
+  // ins_haus = Einsatz Zuhause (Spalte K), eigenverbrauch = Spalte L, gespart = eigenverbrauch × strompreis
+  { jahr:2025, monat:9,  zaehler_start:5461, zaehler_ende:5582, einsp_start:159, einsp_ende:180, produziert: 55.58, ins_haus: 50.35, zum_speicher:0, strompreis:0.3048, kommentar:"" },
+  { jahr:2025, monat:10, zaehler_start:5582, zaehler_ende:5699, einsp_start:180, einsp_ende:193, produziert: 53.87, ins_haus: 46.33, zum_speicher:0, strompreis:0.3048, kommentar:"" },
+  { jahr:2025, monat:11, zaehler_start:5699, zaehler_ende:5878, einsp_start:193, einsp_ende:198, produziert: 38.36, ins_haus: 32.16, zum_speicher:0, strompreis:0.3048, kommentar:"" },
+  { jahr:2025, monat:12, zaehler_start:5878, zaehler_ende:6027, einsp_start:198, einsp_ende:204, produziert: 33.29, ins_haus: 25.99, zum_speicher:0, strompreis:0.3048, kommentar:"Abwesenheit 21.12.–02.01." },
+  { jahr:2026, monat:1,  zaehler_start:6027, zaehler_ende:6225, einsp_start:204, einsp_ende:209, produziert: 36.61, ins_haus: 29.99, zum_speicher:0, strompreis:0.2871, kommentar:"Preissenkung auf 0,2871 €" },
+  { jahr:2026, monat:2,  zaehler_start:6225, zaehler_ende:6392, einsp_start:209, einsp_ende:210, produziert: 36.49, ins_haus: 36.40, zum_speicher:0, strompreis:0.2871, kommentar:"Halber Monat: Akkuerw. + Smartmeter" },
+  { jahr:2026, monat:3,  zaehler_start:6392, zaehler_ende:6488, einsp_start:210, einsp_ende:215, produziert:120.38, ins_haus:115.79, zum_speicher:0, strompreis:0.2871, kommentar:"" },
+  { jahr:2026, monat:4,  zaehler_start:6488, zaehler_ende:6559, einsp_start:215, einsp_ende:240, produziert:150.35, ins_haus:129.28, zum_speicher:0, strompreis:0.2871, kommentar:"2 Tage Anker wg. WLAN nicht gemessen" },
+  { jahr:2026, monat:5,  zaehler_start:6559, zaehler_ende:6648, einsp_start:240, einsp_ende:249, produziert:142.67, ins_haus:134.41, zum_speicher:0, strompreis:0.2871, kommentar:"" },
+  { jahr:2026, monat:6,  zaehler_start:6648, zaehler_ende:6707, einsp_start:249, einsp_ende:270, produziert:150.12, ins_haus:131.19, zum_speicher:0, strompreis:0.2871, kommentar:"" },
+  { jahr:2026, monat:7,  zaehler_start:6707, zaehler_ende:6729, einsp_start:270, einsp_ende:316, produziert:152.66, ins_haus:108.06, zum_speicher:0, strompreis:0.2871, kommentar:"3 Wochen Sommerurlaub" },
 ];
 
 // ── CONSTANTS ──────────────────────────────────────────────────────────────
@@ -68,10 +69,11 @@ function berechne(row) {
   const verbrauch      = row.zaehler_ende - row.zaehler_start;
   const eingespeist    = row.einsp_ende   - row.einsp_start;
   const einsatzZuhause = Number(row.ins_haus) + Number(row.zum_speicher||0);
-  const evQuote        = row.produziert>0 ? einsatzZuhause/row.produziert : 0;
+  const eigenverbrauch = einsatzZuhause - eingespeist;               // EV = Einsatz Zuhause − Eingespeist
+  const evQuote        = row.produziert>0 ? eigenverbrauch/row.produziert : 0;
   const gesamt         = verbrauch + einsatzZuhause;
   const autarkie       = gesamt>0 ? einsatzZuhause/gesamt : 0;
-  const gespart        = einsatzZuhause * row.strompreis;
+  const gespart        = eigenverbrauch * row.strompreis;             // Gespart = EV × Strompreis
   const stromkosten    = verbrauch * row.strompreis;
   const nettoKosten    = stromkosten - gespart;
   const co2            = einsatzZuhause * CO2_FAKTOR;
@@ -275,11 +277,13 @@ export default function App(){
     const ih=Number(form.insHaus),zs=Number(form.zumSpeicher)||0,sp=Number(form.strompreis);
     if(!z||!e||!ih||!sp) return null;
     const verbrauch=z-lastRaw.zaehler_ende, eingespeist=e-lastRaw.einsp_ende;
-    const einsatzZuhause=ih+zs, gespart=einsatzZuhause*sp;
+    const einsatzZuhause=ih+zs;
+    const ev=einsatzZuhause-eingespeist;
+    const gespart=ev*sp;
     const stromkosten=verbrauch*sp, gesamt=verbrauch+einsatzZuhause;
     return { verbrauch, eingespeist, einsatzZuhause, gespart, stromkosten,
              nettoKosten:stromkosten-gespart, autarkie:gesamt>0?einsatzZuhause/gesamt:0,
-             evQ:Number(form.produziert)>0?einsatzZuhause/Number(form.produziert):0 };
+             evQ:Number(form.produziert)>0?ev/Number(form.produziert):0 };
   },[form,lastRaw]);
 
   const totals=useMemo(()=>{
@@ -801,12 +805,12 @@ export default function App(){
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
                 <Field label="Produziert (kWh)"   value={form.produziert}  step="0.01" onChange={sf("produziert")}  error={errors.produziert} required/>
                 <div/>
-                <Field label="Ins Haus (kWh)"     value={form.insHaus}     step="0.01" onChange={sf("insHaus")}     error={errors.insHaus}    required/>
+                <Field label="Ins Haus (kWh)"      value={form.insHaus}     step="0.01" onChange={sf("insHaus")}     error={errors.insHaus}    required/>
                 <Field label="Zum Speicher (kWh)" value={form.zumSpeicher} step="0.01" onChange={sf("zumSpeicher")}/>
               </div>
               {(form.insHaus||form.zumSpeicher)&&(
                 <div style={{marginTop:10,fontSize:12,color:S.muted}}>
-                  Einsatz Zuhause: <strong style={{color:S.accent}}>{(Number(form.insHaus||0)+Number(form.zumSpeicher||0)).toFixed(2)} kWh</strong>
+                  Einsatz Zh.: <strong style={{color:S.accent}}>{(Number(form.insHaus||0)+Number(form.zumSpeicher||0)).toFixed(2)} kWh</strong>
                 </div>
               )}
             </div>
