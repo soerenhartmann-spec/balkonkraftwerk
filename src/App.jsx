@@ -300,10 +300,9 @@ export default function App(){
     const avgPm      =gespart/data.length;
     const bestMonat  =data.reduce((b,r)=>r.gespart>b.gespart?r:b,data[0]);
     const worstMonat =data.reduce((b,r)=>r.gespart<b.gespart?r:b,data[0]);
-    const streak     =berechneStreak(data,10);
     const last3      =data.slice(-3);
     const rolling3   =last3.reduce((s,r)=>s+r.gespart,0)/last3.length;
-    return { gespart,prod,ev,einsp,stromk,netto,co2,avgAut,noch,avgPm,bestMonat,worstMonat,streak,rolling3,jahresprognose:avgPm*12 };
+    return { gespart,prod,ev,einsp,stromk,netto,co2,avgAut,noch,avgPm,bestMonat,worstMonat,rolling3,jahresprognose:avgPm*12 };
   },[data]);
 
   const amortData=useMemo(()=>{ let k=0; return data.map(r=>({name:`${MONAT_NAMEN[r.monat]} ${r.jahr}`,kumulativ:+(k+=r.gespart).toFixed(2)})); },[data]);
@@ -354,11 +353,18 @@ export default function App(){
 
   const tabs=[
     {id:"dashboard",label:"Übersicht"},
-    {id:"statistik",label:"Statistiken"},
-    {id:"charts",   label:"Diagramme"},
+    {id:"analyse",  label:"Analyse"},
     {id:"amort",    label:"Amortisation"},
     {id:"daten",    label:"Monatsdaten"},
   ];
+
+  // ── RESPONSIVE ──
+  const [isMobile, setIsMobile] = useState(()=>window.innerWidth < 768);
+  useEffect(()=>{
+    const fn = ()=>setIsMobile(window.innerWidth<768);
+    window.addEventListener("resize",fn);
+    return ()=>window.removeEventListener("resize",fn);
+  },[]);
 
   // ── LOADING STATE ──
   if(status==="loading") return(
@@ -388,6 +394,172 @@ export default function App(){
       </div>
     </div>
   );
+
+  // ── MOBILE VIEW ──
+  if(isMobile && data.length>0) {
+    const last = data[data.length-1];
+    const amortPct = Math.min(100,(totals?.gespart||0)/INVESTITION_NETTO*100);
+    return(
+      <div style={{background:S.bg,minHeight:"100vh",color:S.text,fontFamily:"'Inter',system-ui,sans-serif",padding:20,maxWidth:480,margin:"0 auto"}}>
+        {/* Mobile Header */}
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <span style={{fontSize:28}}>☀️</span>
+            <div>
+              <div style={{fontWeight:800,fontSize:17}}>BKW Tracker</div>
+              <div style={{color:S.muted,fontSize:11}}>{rows.length} Monate · {rows.length} Einträge</div>
+            </div>
+          </div>
+          <button onClick={()=>{setShowForm(true);setErrors({});}}
+            style={{background:S.accent,color:"#000",border:"none",borderRadius:10,padding:"10px 16px",fontWeight:800,fontSize:14,cursor:"pointer"}}>
+            + Eintragen
+          </button>
+        </div>
+
+        {/* Letzter Monat Snapshot */}
+        <div style={{background:S.card,border:`1px solid ${S.border}`,borderRadius:16,padding:20,marginBottom:16}}>
+          <div style={{color:S.muted,fontSize:11,fontWeight:600,textTransform:"uppercase",marginBottom:12}}>
+            Letzter Monat — {MONAT_NAMEN[last.monat]} {last.jahr}
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginBottom:16}}>
+            {[
+              ["⚡","Produziert",`${last.produziert.toFixed(1)} kWh`,S.accent],
+              ["💰","Gespart",fmtEur(last.gespart),S.green],
+              ["🏠","Autarkie",fmtPct(last.autarkie),S.blue],
+            ].map(([icon,label,value,color])=>(
+              <div key={label} style={{textAlign:"center"}}>
+                <div style={{fontSize:22,marginBottom:4}}>{icon}</div>
+                <div style={{color,fontWeight:800,fontSize:18}}>{value}</div>
+                <div style={{color:S.muted,fontSize:10,textTransform:"uppercase"}}>{label}</div>
+              </div>
+            ))}
+          </div>
+          {last.kommentar&&(
+            <div style={{background:S.bg,borderRadius:8,padding:"8px 12px",fontSize:12,color:S.muted}}>
+              💬 {last.kommentar}
+            </div>
+          )}
+        </div>
+
+        {/* Amortisation */}
+        <div style={{background:S.card,border:`1px solid ${S.border}`,borderRadius:16,padding:20,marginBottom:16}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+            <span style={{fontWeight:700,fontSize:14}}>Amortisation</span>
+            <span style={{color:S.accent,fontWeight:700,fontSize:14}}>{amortPct.toFixed(1)}%</span>
+          </div>
+          <div style={{background:S.border,borderRadius:99,height:10,overflow:"hidden",marginBottom:8}}>
+            <div style={{background:`linear-gradient(90deg,${S.accent},${S.green})`,height:"100%",borderRadius:99,width:`${amortPct.toFixed(1)}%`}}/>
+          </div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:S.muted}}>
+            <span>{fmtEur(totals?.gespart||0)} gespart</span>
+            <span>Break-even: <strong style={{color:S.accent}}>{breakEvenDate(data,INVESTITION_NETTO)}</strong></span>
+          </div>
+        </div>
+
+        {/* Gesamt KPIs */}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+          {[
+            ["Gesamt gespart",fmtEur(totals?.gespart||0),S.green],
+            ["Produziert",`${fmt(totals?.prod||0)} kWh`,S.accent],
+            ["Ø Autarkie",fmtPct(totals?.avgAut||0),S.blue],
+            ["CO₂ gespart",`${fmt((totals?.co2||0)/1000,2)} t`,S.green],
+          ].map(([label,value,color])=>(
+            <div key={label} style={{background:S.card,border:`1px solid ${S.border}`,borderRadius:12,padding:16}}>
+              <div style={{color:S.muted,fontSize:10,textTransform:"uppercase",marginBottom:6}}>{label}</div>
+              <div style={{color,fontWeight:800,fontSize:20}}>{value}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Letzten 3 Monate */}
+        <div style={{background:S.card,border:`1px solid ${S.border}`,borderRadius:16,padding:16}}>
+          <div style={{fontWeight:700,fontSize:13,marginBottom:12}}>Letzte 3 Monate</div>
+          {[...data].reverse().slice(0,3).map((r,i)=>(
+            <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:i<2?`1px solid ${S.border}20`:"none"}}>
+              <span style={{fontWeight:600,fontSize:13}}>{MONAT_NAMEN[r.monat]} {r.jahr}</span>
+              <div style={{display:"flex",gap:16,fontSize:13}}>
+                <span style={{color:S.accent}}>{fmt(r.produziert)} kWh</span>
+                <span style={{color:S.green,fontWeight:700}}>{fmtEur(r.gespart)}</span>
+                <span style={{color:S.blue}}>{fmtPct(r.autarkie)}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Modal + Toast */}
+        {showForm&&(
+          <div style={{position:"fixed",inset:0,background:"#00000090",display:"flex",alignItems:"flex-end",justifyContent:"center",zIndex:100}}>
+            <div style={{background:S.card,border:`1px solid ${S.border}`,borderRadius:"16px 16px 0 0",padding:24,width:"100%",maxHeight:"92vh",overflowY:"auto"}}>
+              <div style={{fontWeight:800,fontSize:17,marginBottom:6,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <span>☀️ Monat eintragen</span>
+                <button onClick={()=>setShowForm(false)} style={{background:"none",border:"none",color:S.muted,cursor:"pointer",fontSize:22}}>✕</button>
+              </div>
+              <div style={{color:S.muted,fontSize:12,marginBottom:20}}>Felder mit <span style={{color:S.accent}}>*</span> sind Pflichtfelder</div>
+
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+                <div>
+                  <label style={{color:S.muted,fontSize:11,fontWeight:600,display:"block",marginBottom:4,textTransform:"uppercase"}}>Monat *</label>
+                  <select value={form.monat} onChange={e=>setForm(f=>({...f,monat:Number(e.target.value)}))}
+                    style={{width:"100%",background:S.card,border:`1px solid ${S.border}`,borderRadius:6,padding:"9px 10px",color:S.text,fontSize:14,boxSizing:"border-box"}}>
+                    {MONAT_LANG.slice(1).map((m,i)=><option key={i+1} value={i+1}>{m}</option>)}
+                  </select>
+                </div>
+                <Field label="Jahr" value={form.jahr} onChange={k=>setForm(f=>({...f,jahr:k}))} required/>
+              </div>
+
+              <div style={{background:S.bg,border:`1px solid ${S.border}`,borderRadius:10,padding:14,marginBottom:12}}>
+                <div style={{fontWeight:700,fontSize:13,marginBottom:10}}>🔌 Zähler — Vormonat: {lastRaw.zaehler_ende} / {lastRaw.einsp_ende}</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                  <Field label="Verbrauch" value={form.zaehlerEnde} onChange={k=>setForm(f=>({...f,zaehlerEnde:k}))} placeholder={`> ${lastRaw.zaehler_ende}`} error={errors.zaehlerEnde} required/>
+                  <Field label="Einspeisung" value={form.einspEnde} onChange={k=>setForm(f=>({...f,einspEnde:k}))} placeholder={`≥ ${lastRaw.einsp_ende}`} error={errors.einspEnde} required/>
+                </div>
+              </div>
+
+              <div style={{background:S.bg,border:`1px solid ${S.border}`,borderRadius:10,padding:14,marginBottom:12}}>
+                <div style={{fontWeight:700,fontSize:13,marginBottom:10}}>📱 Anker SOLIX App</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                  <Field label="Produziert (kWh)" value={form.produziert} step="0.01" onChange={k=>setForm(f=>({...f,produziert:k}))} error={errors.produziert} required/>
+                  <Field label="Ins Haus (kWh)" value={form.insHaus} step="0.01" onChange={k=>setForm(f=>({...f,insHaus:k}))} error={errors.insHaus} required/>
+                  <Field label="Zum Speicher (kWh)" value={form.zumSpeicher} step="0.01" onChange={k=>setForm(f=>({...f,zumSpeicher:k}))}/>
+                  <div/>
+                </div>
+              </div>
+
+              <div style={{marginBottom:12}}>
+                <label style={{color:S.muted,fontSize:11,fontWeight:600,display:"block",marginBottom:4,textTransform:"uppercase"}}>Kommentar</label>
+                <input type="text" value={form.kommentar} placeholder="z.B. Urlaub..."
+                  onChange={e=>setForm(f=>({...f,kommentar:e.target.value}))}
+                  style={{width:"100%",background:S.card,border:`1px solid ${S.border}`,borderRadius:6,padding:"9px 10px",color:S.text,fontSize:13,boxSizing:"border-box"}}/>
+              </div>
+
+              {preview&&(
+                <div style={{background:`${S.green}15`,border:`1px solid ${S.green}40`,borderRadius:10,padding:12,marginBottom:14}}>
+                  <div style={{color:S.green,fontWeight:700,fontSize:11,marginBottom:8,textTransform:"uppercase"}}>✓ Berechnet</div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+                    {[["Gespart",`${preview.gespart.toFixed(2)} €`,S.green],["Autarkie",fmtPct(preview.autarkie),S.blue],["EV-Quote",fmtPct(preview.evQ),S.blue]].map(([l,v,c])=>(
+                      <div key={l}><div style={{color:S.muted,fontSize:10,textTransform:"uppercase"}}>{l}</div><div style={{color:c,fontWeight:700,fontSize:15}}>{v}</div></div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {Object.keys(errors).length>0&&(
+                <div style={{background:`${S.red}18`,border:`1px solid ${S.red}50`,borderRadius:8,padding:"10px 14px",marginBottom:12,fontSize:12,color:S.red}}>
+                  Bitte alle Pflichtfelder ausfüllen.
+                </div>
+              )}
+
+              <button onClick={handleAdd}
+                style={{width:"100%",background:S.accent,color:"#000",border:"none",borderRadius:10,padding:"14px",fontWeight:800,cursor:"pointer",fontSize:15}}>
+                Monat speichern
+              </button>
+            </div>
+          </div>
+        )}
+        {toast&&<Toast msg={toast.msg} type={toast.type} onClose={()=>setToast(null)}/>}
+      </div>
+    );
+  }
 
   return(
     <div style={{background:S.bg,minHeight:"100vh",color:S.text,fontFamily:"'Inter',system-ui,sans-serif",fontSize:14}}>
@@ -454,13 +626,44 @@ export default function App(){
               </div>
             </div>
 
+            {/* Heatmap */}
+            <div style={{background:S.card,border:`1px solid ${S.border}`,borderRadius:12,padding:20,marginBottom:24}}>
+              <div style={{fontWeight:700,marginBottom:4}}>Jahres-Heatmap</div>
+              <div style={{color:S.muted,fontSize:11,marginBottom:14}}>Produktion pro Monat — dunkler = mehr Sonne</div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:6}}>
+                {(() => {
+                  const maxProd = Math.max(...data.map(r=>r.produziert));
+                  const allMonths = Array.from({length:12},(_,i)=>i+1).map(m=>{
+                    const r = data.find(d=>d.monat===m);
+                    return { monat:m, row:r||null };
+                  });
+                  return allMonths.map(({monat,row})=>{
+                    const intensity = row ? row.produziert/maxProd : 0;
+                    const bg = row
+                      ? `rgba(245,158,11,${0.15 + intensity*0.85})`
+                      : S.border;
+                    return(
+                      <div key={monat} style={{background:bg,borderRadius:8,padding:"10px 6px",textAlign:"center",
+                        border:`1px solid ${row?`rgba(245,158,11,${0.3+intensity*0.5})`:S.border}`}}>
+                        <div style={{fontSize:11,fontWeight:600,color:row?(intensity>0.5?"#000":S.text):S.muted}}>
+                          {MONAT_NAMEN[monat]}
+                        </div>
+                        {row&&<div style={{fontSize:10,color:row?(intensity>0.5?"#000":S.muted):S.muted,marginTop:2}}>
+                          {row.produziert.toFixed(0)} kWh
+                        </div>}
+                        {!row&&<div style={{fontSize:10,color:S.border,marginTop:2}}>–</div>}
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            </div>
+
             {/* Highlights */}
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",gap:16,marginBottom:24}}>
               {[
                 {icon:"🏆",label:"Bester Monat",value:`${MONAT_NAMEN[totals.bestMonat.monat]} ${totals.bestMonat.jahr}`,sub:`${fmtEur(totals.bestMonat.gespart)} · ${fmt(totals.bestMonat.produziert)} kWh`,color:S.accent},
-                {icon:"📉",label:"Schwächster Monat",value:`${MONAT_NAMEN[totals.worstMonat.monat]} ${totals.worstMonat.jahr}`,sub:totals.worstMonat.kommentar||`${fmtEur(totals.worstMonat.gespart)}`,color:S.muted},
-                {icon:"📈",label:`Trend (3-Monats-Ø)`,value:fmtEur(totals.rolling3),sub:momChange!==null?`${momChange>=0?"+":""}${momChange.toFixed(1)}% ggü. Vormonat`:"",color:S.blue},
-                {icon:"🔥",label:"Streak ≥ 10 €/Mon.",value:`${totals.streak.current} Monate`,sub:`Rekord: ${totals.streak.max} Monate in Folge`,color:S.purple},
+                {icon:"📈",label:"Trend (3-Monats-Ø)",value:fmtEur(totals.rolling3),sub:momChange!==null?`${momChange>=0?"+":""}${momChange.toFixed(1)}% ggü. Vormonat`:"",color:S.blue},
               ].map((k,i)=>(
                 <div key={i} style={{background:S.card,border:`1px solid ${S.border}`,borderRadius:12,padding:16}}>
                   <div style={{color:S.muted,fontSize:11,fontWeight:600,textTransform:"uppercase",marginBottom:8}}>{k.icon} {k.label}</div>
@@ -470,39 +673,13 @@ export default function App(){
               ))}
             </div>
 
-            {/* Letzte Monate */}
-            <div style={{background:S.card,border:`1px solid ${S.border}`,borderRadius:12,padding:20,overflowX:"auto"}}>
-              <div style={{fontWeight:700,marginBottom:14}}>
-                Letzte Monate
-                <span style={{color:S.muted,fontSize:12,fontWeight:400,marginLeft:8}}>→ alle Details im Tab "Monatsdaten"</span>
-              </div>
-              <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
-                <thead>
-                  <tr style={{borderBottom:`1px solid ${S.border}`,color:S.muted}}>
-                    {["Monat","Produziert","Einsatz Zuhause","Autarkie","Gespart","Netto-Kosten"].map(h=>(
-                      <th key={h} style={{padding:"6px 12px",textAlign:"left",fontWeight:600,whiteSpace:"nowrap"}}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {[...data].reverse().slice(0,5).map((r,i)=>(
-                    <tr key={i} style={{borderBottom:`1px solid ${S.border}20`}}>
-                      <td style={{padding:"8px 12px",fontWeight:600}}>{MONAT_NAMEN[r.monat]} {r.jahr}</td>
-                      <td style={{padding:"8px 12px",color:S.accent}}>{fmt(r.produziert)} kWh</td>
-                      <td style={{padding:"8px 12px",color:S.green}}>{fmt(r.einsatzZuhause)} kWh</td>
-                      <td style={{padding:"8px 12px"}}>{fmtPct(r.autarkie)}</td>
-                      <td style={{padding:"8px 12px",color:S.green,fontWeight:700}}>{fmtEur(r.gespart)}</td>
-                      <td style={{padding:"8px 12px",color:r.nettoKosten<0?S.green:S.red}}>{fmtEur(r.nettoKosten)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+
+
           </div>
         )}
 
-        {/* ── STATISTIKEN ── */}
-        {activeTab==="statistik"&&totals&&(
+        {/* ── ANALYSE ── */}
+        {activeTab==="analyse"&&totals&&(
           <div style={{display:"flex",flexDirection:"column",gap:24}}>
             <div style={{background:S.card,border:`1px solid ${S.border}`,borderRadius:12,padding:20}}>
               <div style={{fontWeight:700,marginBottom:4}}>☀️ Sonnenstunden vs. Produktion</div>
@@ -594,10 +771,10 @@ export default function App(){
               </div>
             </div>
           </div>
-        )}
 
-        {/* ── DIAGRAMME ── */}
-        {activeTab==="charts"&&(
+          {/* ── Diagramme ── */}
+          <div style={{borderTop:`1px solid ${S.border}`,margin:"8px 0 24px"}}/>
+          <div style={{fontWeight:700,fontSize:15,marginBottom:16,color:S.text}}>Diagramme</div>
           <div style={{display:"flex",flexDirection:"column",gap:24}}>
             <div style={{background:S.card,border:`1px solid ${S.border}`,borderRadius:12,padding:20}}>
               <div style={{fontWeight:700,marginBottom:16}}>Produktion, Einsatz Zuhause & Einspeisung (kWh)</div>
