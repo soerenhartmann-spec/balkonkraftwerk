@@ -550,23 +550,40 @@ export default function App() {
             </div>
 
             {/* Heatmap */}
-            <div style={{background:S.card,border:`1px solid ${S.border}`,borderRadius:12,padding:20,marginBottom:24}}>
-              <div style={{fontWeight:700,marginBottom:4}}>Jahres-Heatmap — Produktion</div>
-              <div style={{color:S.muted,fontSize:11,marginBottom:14}}>Alle Monate · dunkler = mehr Produktion</div>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:6}}>
-                {Array.from({length:12},(_,i)=>i+1).map(m=>{
-                  const r=data.find(d=>d.monat===m);
-                  const maxP=Math.max(...data.map(d=>d.produziert),1);
-                  const intensity=r?r.produziert/maxP:0;
-                  return(
-                    <div key={m} style={{background:r?`rgba(245,158,11,${0.15+intensity*0.85})`:S.border,borderRadius:8,padding:"10px 6px",textAlign:"center",border:`1px solid ${r?`rgba(245,158,11,${0.3+intensity*0.5})`:S.border}`}}>
-                      <div style={{fontSize:11,fontWeight:600,color:r?(intensity>0.5?"#000":S.text):S.muted}}>{MONAT_NAMEN[m]}</div>
-                      <div style={{fontSize:10,color:r?(intensity>0.5?"#000":S.muted):S.border,marginTop:2}}>{r?r.produziert.toFixed(0)+" kWh":"–"}</div>
+            {(()=>{
+              const years=[...new Set(data.map(d=>d.jahr))].sort();
+              const maxP=Math.max(...data.map(d=>d.produziert),1);
+              return(
+                <div style={{background:S.card,border:`1px solid ${S.border}`,borderRadius:12,padding:20,marginBottom:24}}>
+                  <div style={{fontWeight:700,marginBottom:4}}>Jahres-Heatmap — Produktion</div>
+                  <div style={{color:S.muted,fontSize:11,marginBottom:14}}>Pro Jahr · dunkler = mehr Produktion</div>
+                  {/* Monats-Header */}
+                  <div style={{display:"grid",gridTemplateColumns:`48px repeat(12,1fr)`,gap:4,marginBottom:4}}>
+                    <div/>
+                    {Array.from({length:12},(_,i)=>i+1).map(m=>(
+                      <div key={m} style={{textAlign:"center",fontSize:10,color:S.muted,fontWeight:600}}>{MONAT_NAMEN[m]}</div>
+                    ))}
+                  </div>
+                  {/* Eine Zeile pro Jahr */}
+                  {years.map(y=>(
+                    <div key={y} style={{display:"grid",gridTemplateColumns:`48px repeat(12,1fr)`,gap:4,marginBottom:4}}>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"flex-end",paddingRight:6,fontSize:11,fontWeight:700,color:S.muted}}>{y}</div>
+                      {Array.from({length:12},(_,i)=>i+1).map(m=>{
+                        const r=data.find(d=>d.jahr===y&&d.monat===m);
+                        const intensity=r?r.produziert/maxP:0;
+                        return(
+                          <div key={m} title={r?`${MONAT_NAMEN[m]} ${y}: ${r.produziert.toFixed(0)} kWh`:`${MONAT_NAMEN[m]} ${y}: keine Daten`}
+                            style={{background:r?`rgba(245,158,11,${0.15+intensity*0.85})`:S.border,borderRadius:6,padding:"8px 4px",textAlign:"center",border:`1px solid ${r?`rgba(245,158,11,${0.3+intensity*0.5})`:S.border}`}}>
+                            <div style={{fontSize:10,color:r?(intensity>0.5?"#000":S.muted):S.border}}>{r?r.produziert.toFixed(0):"–"}</div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  );
-                })}
-              </div>
-            </div>
+                  ))}
+                  <div style={{marginTop:6,fontSize:10,color:S.muted}}>Werte in kWh · Hover für Details</div>
+                </div>
+              );
+            })()}
 
             {/* Highlights + Trend */}
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",gap:16,marginBottom:24}}>
